@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style></head><body>
+<title>ניקיונות לבניה</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800&family=Assistant:wght@400;600;700&display=swap"><style id="app-css">
+/* Layout: RTL single column, max 680px. Deep-green hero (balance + ring + status) → goal picker → next visit → chart → monthly plan → punch card → log */
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --ink:#17201c; --muted:#5f6d67; --line:#dde3df;
+  --accent:#1d7356; --accent-soft:#dcefe6; --plan:#8e9c96;
+  --hero:#123f33; --hero-ink:#eef7f2; --hero-muted:#a8cbbd; --ring:#7fdcb6;
+  --clay:#b5532c; --clay-soft:#f7e6dc; --warn:#9a5f0c; --warn-soft:#f6ebd4;
+  --display:"Rubik",system-ui,sans-serif; --body:"Assistant",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1412; --surface:#161f1c; --ink:#e4ece8; --muted:#93a39c; --line:#26322e;
+  --accent:#4cc79a; --accent-soft:#173a2e; --plan:#6f7f78;
+  --hero:#0f2e25; --hero-ink:#e9f5ef; --hero-muted:#8fbfac; --ring:#6fd6ad;
+  --clay:#ef8f66; --clay-soft:#3a2219; --warn:#e0a84a; --warn-soft:#3a2c12; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1412; --surface:#161f1c; --ink:#e4ece8; --muted:#93a39c; --line:#26322e;
+  --accent:#4cc79a; --accent-soft:#173a2e; --plan:#6f7f78;
+  --hero:#0f2e25; --hero-ink:#e9f5ef; --hero-muted:#8fbfac; --ring:#6fd6ad;
+  --clay:#ef8f66; --clay-soft:#3a2219; --warn:#e0a84a; --warn-soft:#3a2c12; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+#app{max-width:680px;margin:0 auto;padding-block:20px 56px;padding-inline:16px;display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
+h2{font-size:1.1rem;font-weight:700}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:.86rem}
+
+/* hero */
+.hero{background:var(--hero);color:var(--hero-ink);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:16px}
+.hero-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.who{font-weight:700;font-size:.85rem;letter-spacing:.05em;color:var(--hero-muted)}
+.hero-main{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.ring{width:118px;height:118px;display:block}
+.ring text{font-family:var(--display);font-weight:800}
+.bal-label{color:var(--hero-muted);font-weight:600}
+.bal{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,9vw,3.4rem);line-height:1.05;letter-spacing:-.01em}
+.bal-sub{color:var(--hero-muted);font-size:.95rem}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid color-mix(in srgb,var(--hero-muted) 35%,transparent);padding-top:14px}
+.hs b{display:block;font-family:var(--display);font-size:1.25rem}
+.hs span{font-size:.8rem;color:var(--hero-muted)}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 12px;font-weight:700;font-size:.88rem;white-space:nowrap}
+.pill.good{background:var(--accent-soft);color:var(--accent)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.even{background:var(--surface);color:var(--ink)}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.card-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+
+/* goal picker */
+.goals{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.goal{font:inherit;text-align:right;background:var(--bg);border:2px solid var(--line);border-radius:14px;padding:14px;color:var(--ink);display:flex;flex-direction:column;gap:4px;cursor:default}
+.goal.can{cursor:pointer}
+.goal.can:hover{border-color:var(--plan)}
+.goal.on{border-color:var(--accent);background:var(--accent-soft)}
+.goal h3{font-size:1.15rem;font-weight:800}
+.goal .pace{font-family:var(--display);font-weight:700;font-size:1.5rem;color:var(--accent);line-height:1.15}
+.goal .tick{font-size:.78rem;font-weight:700;color:var(--accent)}
+.start-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* next visit */
+.next{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center}
+.cal{width:62px;border-radius:12px;overflow:hidden;border:1px solid var(--line);text-align:center;background:var(--bg)}
+.cal i{display:block;font-style:normal;background:var(--accent);color:var(--surface);font-size:.75rem;font-weight:700;padding:2px 0}
+.cal b{display:block;font-family:var(--display);font-size:1.6rem;line-height:1.3}
+.quick{background:var(--accent);color:var(--surface);font-size:1rem;padding:12px 16px;border-radius:12px;white-space:nowrap}
+
+/* chart */
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:18px;height:0;border-top:2.5px solid var(--accent)}
+.sw.plan{border-top:2px dashed var(--plan)}
+.chart{position:relative;width:100%;min-height:230px}
+.chart svg{display:block;width:100%;overflow:visible}
+.chart text{font-family:var(--body);font-size:11px;fill:var(--muted)}
+.tip{position:absolute;top:4px;pointer-events:none;background:var(--ink);color:var(--surface);border-radius:10px;padding:8px 10px;font-size:.82rem;line-height:1.35;white-space:nowrap;transform:translateX(-50%)}
+.tip b{font-family:var(--display)}
+
+/* tables */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:right;padding:10px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:.8rem;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+tr.now td{background:var(--accent-soft)}
+.st{font-weight:700;font-size:.85rem;white-space:nowrap}
+.st.ok{color:var(--accent)}
+.st.miss{color:var(--clay)}
+.st.cur{color:var(--warn)}
+.mini{height:6px;background:var(--line);border-radius:99px;overflow:hidden;min-width:60px}
+.mini i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.price{font-weight:700;color:var(--accent);white-space:nowrap}
+.left{color:var(--clay);white-space:nowrap}
+.note{font-size:.82rem;color:var(--muted)}
+
+/* punch card */
+.punch{display:grid;grid-template-columns:repeat(10,1fr);gap:6px}
+.slot{position:relative;aspect-ratio:1;max-width:100%;border:1.5px dashed var(--line);border-radius:9px;overflow:hidden;display:grid;place-items:center;font-size:.72rem;color:var(--muted);font-weight:600}
+.slot>i{position:absolute;inset:0 0 0 auto;background:var(--accent)}
+.slot>em{position:relative;font-style:normal}
+.slot.full{border:1.5px solid var(--accent)}
+.slot.full>em{color:var(--surface)}
+.slot.due{border-color:var(--warn);border-style:solid}
+
+/* form */
+details summary{cursor:pointer;font-weight:700;color:var(--accent)}
+form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+label{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:.88rem}
+label.wide{grid-column:1/-1}
+input{font:inherit;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);min-width:0}
+button{font:inherit;font-weight:700;border:0;border-radius:10px;padding:10px 14px;cursor:pointer}
+button:disabled{opacity:.55;cursor:default}
+.primary{grid-column:1/-1;background:var(--accent);color:var(--surface)}
+.ghost{background:transparent;border:1px solid var(--line);color:var(--muted);padding:4px 10px;font-size:.82rem}
+.ghost.confirm{background:var(--clay);border-color:var(--clay);color:var(--surface)}
+button:focus-visible,input:focus-visible,.goal:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.msg{padding:10px 14px;border-radius:10px;background:var(--clay-soft);color:var(--clay);font-weight:600}
+.flash{padding:10px 14px;border-radius:10px;background:var(--accent-soft);color:var(--accent);font-weight:700}
+.empty{padding:18px;text-align:center;color:var(--muted);border:1.5px dashed var(--line);border-radius:12px}
+.foot{font-size:.84rem;color:var(--muted);text-align:center}
+@media (max-width:440px){
+  .hero-main{grid-template-columns:1fr;justify-items:start}
+  .ring{width:96px;height:96px}
+  .next{grid-template-columns:auto 1fr}
+  .next .quick{grid-column:1/-1}
+  .punch{grid-template-columns:repeat(8,1fr)}
+}
+@media (prefers-reduced-motion:no-preference){.ring .arc{transition:stroke-dasharray .6s ease}}
+</style><main id="app" dir="rtl" lang="he"></main><script type="application/json" id="state">{"cleanings":[],"goal":{"months":6,"start":"2026-10-13"}}</script><script id="app-js">
+(function(){
+  var TOTAL=7500, PER=200, PER_HOUR=50, VISITS=TOTAL/PER, DAY=864e5;
+  var RESET=':root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}';
+  var FONTS='<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800&family=Assistant:wght@400;600;700&display=swap">';
+  var state;
+  try{state=JSON.parse(document.getElementById('state').textContent)}catch(e){state={}}
+  if(!state.cleanings) state.cleanings=[];
+  var art=null, canWrite=false, saving=false, pendingDel=null, msg='', flash='';
+  try{flash=sessionStorage.getItem('nk-flash')||'';sessionStorage.removeItem('nk-flash')}catch(e){}
+  var app=document.getElementById('app');
+
+  // ---------- helpers ----------
+  function ils(n){return '₪'+Math.round(n).toLocaleString('he-IL')}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+  function parse(s){var p=s.split('-');return new Date(+p[0],p[1]-1,+p[2])}
+  function today(){var d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
+  function addDays(d,n){return new Date(d.getFullYear(),d.getMonth(),d.getDate()+Math.round(n))}
+  function addMonths(d,m){return new Date(d.getFullYear(),d.getMonth()+m,d.getDate())}
+  function days(a,b){return Math.round((b-a)/DAY)}
+  function fd(d,o){return d.toLocaleDateString('he-IL',o)}
+  function n1(x){return x.toLocaleString('he-IL',{maximumFractionDigits:1})}
+  function sorted(){return state.cleanings.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0})}
+
+  function months(){return state.goal&&state.goal.months===12?12:6}
+  function startDate(list){
+    if(state.goal&&state.goal.start) return parse(state.goal.start);
+    return list.length?parse(list[0].date):today();
+  }
+  function makePlan(m,start){
+    var end=addMonths(start,m), total=days(start,end), interval=total/VISITS;
+    return {months:m,start:start,end:end,total:total,interval:interval,perMonth:30.44/interval,perWeek:7/interval};
+  }
+  function expectedAt(d,p){return TOTAL*Math.max(0,Math.min(1,days(p.start,d)/p.total))}
+  function visitDate(k,p){return k>=VISITS?p.end:addDays(p.start,k*p.interval)}
+  function paidBy(d,list){var s=0;list.forEach(function(c){if(parse(c.date)<=d)s+=c.amount});return s}
+
+  // ---------- render ----------
+  function render(){
+    var list=sorted();
+    var paid=list.reduce(function(s,c){return s+c.amount},0);
+    var owed=Math.max(0,TOTAL-paid), done=owed===0;
+    var pct=Math.min(1,paid/TOTAL);
+    var t=today();
+    var start=startDate(list);
+    var p=makePlan(months(),start);
+    var expNow=expectedAt(t,p);
+    var diff=paid-expNow;
+    var h='';
+
+    // status pill
+    var pill;
+    if(done) pill='<span class="pill good"><span class="dot"></span>החוב סולק</span>';
+    else if(Math.abs(diff)<PER/2) pill='<span class="pill even"><span class="dot"></span>בדיוק לפי התוכנית</span>';
+    else if(diff>0) pill='<span class="pill good"><span class="dot"></span>מקדים ב־'+ils(diff)+'</span>';
+    else pill='<span class="pill warn"><span class="dot"></span>מאחר ב־'+n1(-diff/PER)+' ניקיונות</span>';
+
+    // hero
+    var R=48, C=2*Math.PI*R;
+    h+='<section class="hero" aria-label="מצב החוב"><div class="hero-top"><span class="who">ההסכם בין שמואל לבניה</span>'+pill+'</div>'
+      +'<div class="hero-main"><svg class="ring" viewBox="0 0 120 120" role="img" aria-label="'+Math.round(pct*100)+' אחוז שולם">'
+      +'<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="var(--hero-muted)" stroke-opacity=".25" stroke-width="12"/>'
+      +'<circle class="arc" cx="60" cy="60" r="'+R+'" fill="none" stroke="var(--ring)" stroke-width="12" stroke-linecap="round" stroke-dasharray="'+(C*pct)+' '+C+'" transform="rotate(-90 60 60)"/>'
+      +'<text x="60" y="60" text-anchor="middle" dominant-baseline="central" fill="var(--hero-ink)" font-size="26">'+Math.round(pct*100)+'%</text></svg>'
+      +'<div><div class="bal-label">'+(done?'כל הכבוד, הכל שולם':'שמואל עוד חייב לבניה')+'</div>'
+      +'<div class="bal num">'+ils(owed)+'</div>'
+      +'<div class="bal-sub">מתוך '+ils(TOTAL)+' · ניקיון של 4 שעות = ₪200</div></div></div>'
+      +'<div class="hero-stats"><div class="hs"><b class="num">'+ils(paid)+'</b><span>שולם בניקיונות</span></div>'
+      +'<div class="hs"><b class="num">'+list.length+'</b><span>ניקיונות שבוצעו</span></div>'
+      +'<div class="hs"><b class="num">'+n1(owed/PER)+'</b><span>ניקיונות שנשארו</span></div></div></section>';
+
+    if(flash) h+='<div class="flash" role="status">'+esc(flash)+'</div>';
+    if(msg) h+='<div class="msg" role="status">'+esc(msg)+'</div>';
+
+    // goal picker
+    h+='<section class="card"><div class="card-head"><h2>יעד סיום</h2><span class="small muted">'+(canWrite?'בחר יעד, והתוכנית תתעדכן':'היעד ששמואל בחר')+'</span></div><div class="goals">';
+    [6,12].forEach(function(m){
+      var g=makePlan(m,start), on=months()===m;
+      h+='<button type="button" class="goal'+(on?' on':'')+(canWrite?' can':'')+'" data-goal="'+m+'"'+(canWrite&&!saving?'':' disabled')+' aria-pressed="'+on+'">'
+        +(on?'<span class="tick">✓ היעד הנבחר</span>':'<span class="tick" style="visibility:hidden">·</span>')
+        +'<h3>'+(m===6?'חצי שנה':'שנה')+'</h3>'
+        +'<span class="pace num">'+n1(g.perMonth)+' בחודש</span>'
+        +'<span class="small muted">ניקיון כל '+n1(g.interval)+' ימים · כ־'+Math.round(g.perMonth*4)+' שעות בחודש</span>'
+        +'<span class="small">סיום: <b>'+fd(g.end,{day:'numeric',month:'long',year:'numeric'})+'</b></span></button>';
+    });
+    h+='</div><div class="start-row small muted">התחלת התוכנית: <b class="num" style="color:var(--ink)">'+fd(start,{day:'numeric',month:'numeric',year:'numeric'})+'</b>'
+      +(canWrite?' <label style="flex-direction:row;align-items:center;gap:6px">שינוי<input id="g-start" type="date" value="'+iso(start)+'"></label>':'')+'</div></section>';
+
+    // next visit
+    if(!done){
+      var k=Math.floor(paid/PER)+1;
+      var nd=visitDate(k,p), dd=days(t,nd);
+      var when=dd<0?'<b style="color:var(--clay)">באיחור של '+(-dd)+' ימים</b>':dd===0?'<b>היום</b>':dd===1?'<b>מחר</b>':'בעוד '+dd+' ימים';
+      h+='<section class="card next"><div class="cal" aria-hidden="true"><i>'+fd(nd,{month:'short'})+'</i><b class="num">'+nd.getDate()+'</b></div>'
+        +'<div><h2>הניקיון הבא לפי התוכנית</h2><div class="small muted">'+fd(nd,{weekday:'long',day:'numeric',month:'numeric'})+' · '+when+' · ניקיון מס׳ '+Math.min(k,38)+(k>=38?' (שעתיים)':'')+'</div></div>'
+        +(canWrite?'<button type="button" class="quick" id="quick"'+(saving?' disabled':'')+'>'+(saving?'שומר…':'ניקיתי היום ✓')+'</button>':'')+'</section>';
+    }
+
+    // chart
+    h+='<section class="card"><div class="card-head"><h2>ההתקדמות מול התוכנית</h2><div class="legend"><span><i class="sw"></i>שולם בפועל</span><span><i class="sw plan"></i>תוכנית '+(p.months===6?'חצי שנה':'שנה')+'</span></div></div>'
+      +'<div class="chart" id="chart"></div></section>';
+
+    // monthly plan
+    h+='<section class="card"><div class="card-head"><h2>תוכנית חודשית</h2><span class="small muted">'+n1(p.perMonth)+' ניקיונות בחודש בממוצע</span></div><div class="tw"><table><thead><tr><th>חודש</th><th>יעד</th><th>בוצע</th><th></th><th>סטטוס</th></tr></thead><tbody>';
+    var sched=[]; for(var v=1;v<=Math.ceil(VISITS);v++) sched.push(visitDate(v,p));
+    var mCur=new Date(p.start.getFullYear(),p.start.getMonth(),1);
+    while(mCur<=p.end){
+      var mNext=new Date(mCur.getFullYear(),mCur.getMonth()+1,1);
+      var target=sched.filter(function(d){return d>=mCur&&d<mNext}).length;
+      var got=list.filter(function(c){var d=parse(c.date);return d>=mCur&&d<mNext}).reduce(function(s,c){return s+c.amount/PER},0);
+      var isNow=t>=mCur&&t<mNext, past=mNext<=t;
+      var st='';
+      if(past) st=got>=target?'<span class="st ok">✓ עמד ביעד</span>':'<span class="st miss">חסרו '+n1(target-got)+'</span>';
+      else if(isNow) st=got>=target?'<span class="st ok">✓ הושלם</span>':'<span class="st cur">עוד '+n1(target-got)+'</span>';
+      var w=target?Math.min(100,got/target*100):(got?100:0);
+      h+='<tr'+(isNow?' class="now"':'')+'><td>'+fd(mCur,{month:'long',year:'2-digit'})+'</td><td class="num">'+target+'</td><td class="num">'+n1(got)+'</td><td><div class="mini"><i style="width:'+w+'%"></i></div></td><td>'+st+'</td></tr>';
+      mCur=mNext;
+    }
+    h+='</tbody></table></div></section>';
+
+    // punch card
+    h+='<section class="card"><div class="card-head"><h2>כרטיסיית ניקיונות</h2><span class="small muted">37 מלאים + חצי אחרון</span></div><div class="punch">';
+    var slots=Math.ceil(VISITS), nextSlot=Math.floor(paid/PER);
+    for(var i=0;i<slots;i++){
+      var val=Math.min(PER,TOTAL-i*PER);
+      var f=Math.max(0,Math.min(1,(paid-i*PER)/val));
+      var cls=f>=1?' full':(i===nextSlot&&!done?' due':'');
+      h+='<div class="slot'+cls+'" title="ניקיון '+(i+1)+' · '+ils(val)+' · יעד: '+fd(sched[i],{day:'numeric',month:'numeric'})+'"><i style="width:'+(f*100)+'%"></i><em>'+(val<PER?'½':(i+1))+'</em></div>';
+    }
+    h+='</div><div class="small muted">'+ils(TOTAL)+' ÷ ₪200 = 37.5. המשבצת האחרונה היא ניקיון של שעתיים (₪100).</div></section>';
+
+    // log
+    h+='<section class="card"><div class="card-head"><h2>ניקיונות שבוצעו</h2><span class="small muted">'+list.length+' ניקיונות · '+ils(paid)+'</span></div>';
+    if(canWrite){
+      h+='<details><summary>הוספת ניקיון בתאריך אחר או בשעות אחרות</summary><form id="add">'
+        +'<label>תאריך<input id="f-date" type="date" required value="'+iso(t)+'"></label>'
+        +'<label>שעות<input id="f-hours" type="number" min="0.5" max="12" step="0.5" required value="4" inputmode="decimal"></label>'
+        +'<label class="wide">הערה (לא חובה)<input id="f-note" type="text" maxlength="80" placeholder="למשל: כולל חלונות"></label>'
+        +'<div class="small" id="f-prev" style="grid-column:1/-1;font-weight:700">סכום: ₪200</div>'
+        +'<button class="primary" type="submit"'+(saving?' disabled':'')+'>'+(saving?'שומר…':'הוסף ניקיון')+'</button></form></details>';
+    }
+    if(!list.length){
+      h+='<div class="empty">עוד לא נרשמו ניקיונות. '+(canWrite?'אחרי ניקיון לחץ על "ניקיתי היום ✓".':'כששמואל ירשום ניקיון, הוא יופיע כאן עם המחיר.')+'</div>';
+    } else {
+      h+='<div class="tw"><table><thead><tr><th>#</th><th>תאריך</th><th>שעות</th><th>מחיר</th><th>נשאר</th>'+(canWrite?'<th></th>':'')+'</tr></thead><tbody>';
+      var run=TOTAL;
+      list.forEach(function(c,idx){
+        run-=c.amount;
+        h+='<tr><td class="num">'+(idx+1)+'</td><td>'+fd(parse(c.date),{weekday:'short',day:'numeric',month:'numeric',year:'2-digit'})+(c.note?'<div class="note">'+esc(c.note)+'</div>':'')+'</td><td class="num">'+c.hours+'</td>'
+          +'<td class="price num">+'+ils(c.amount)+'</td><td class="left num">'+ils(Math.max(0,run))+'</td>'
+          +(canWrite?'<td><button type="button" class="ghost'+(pendingDel===c.id?' confirm':'')+'" data-del="'+esc(c.id)+'"'+(saving?' disabled':'')+'>'+(pendingDel===c.id?'למחוק?':'מחק')+'</button></td>':'')+'</tr>';
+      });
+      h+='</tbody></table></div>';
+    }
+    h+='</section>';
+    h+='<div class="foot">'+(canWrite?'כל שינוי נשמר ומופיע גם אצל בניה.':'הדף מתעדכן אחרי כל ניקיון שנרשם.')+'</div>';
+
+    app.innerHTML=h;
+    drawChart(list,p,t);
+    bind(list,start);
+  }
+
+  // ---------- chart ----------
+  var lastChart=null;
+  function drawChart(list,p,t){
+    lastChart=[list,p,t];
+    var box=document.getElementById('chart'); if(!box) return;
+    var W=Math.max(280,box.clientWidth), H=230, L=50, Rr=14, T=14, B=28;
+    var x0=p.start, lastC=list.length?parse(list[list.length-1].date):x0;
+    var x1=new Date(Math.max(p.end,lastC,t));
+    var span=Math.max(1,(x1-x0));
+    function X(d){return L+Math.max(0,Math.min(1,(d-x0)/span))*(W-L-Rr)}
+    function Y(v){return T+(1-v/TOTAL)*(H-T-B)}
+    var s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" style="direction:ltr" aria-hidden="true">';
+    [0,2500,5000,7500].forEach(function(v){
+      s+='<line x1="'+L+'" x2="'+(W-Rr)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--line)" stroke-width="1"/>'
+        +'<text x="'+(L-6)+'" y="'+Y(v)+'" text-anchor="end" dominant-baseline="central">'+ils(v)+'</text>';
+    });
+    var ticks=[], m=new Date(x0.getFullYear(),x0.getMonth()+1,1);
+    while(m<=x1){ticks.push(m);m=new Date(m.getFullYear(),m.getMonth()+1,1)}
+    var every=ticks.length>8?2:1;
+    ticks.forEach(function(d,i){ if(i%every) return;
+      s+='<line x1="'+X(d)+'" x2="'+X(d)+'" y1="'+(H-B)+'" y2="'+(H-B+4)+'" stroke="var(--line)"/>'
+        +'<text x="'+X(d)+'" y="'+(H-B+16)+'" text-anchor="middle">'+fd(d,{month:'short'})+'</text>';
+    });
+    // plan
+    s+='<line x1="'+X(p.start)+'" y1="'+Y(0)+'" x2="'+X(p.end)+'" y2="'+Y(TOTAL)+'" stroke="var(--plan)" stroke-width="2" stroke-dasharray="6 5"/>';
+    // actual step
+    var cum=0, d='M'+X(x0)+' '+Y(0), pts=[];
+    list.forEach(function(c){var cx=X(parse(c.date));d+=' H'+cx;cum+=c.amount;d+=' V'+Y(Math.min(TOTAL,cum));pts.push([cx,Y(Math.min(TOTAL,cum)),c,cum])});
+    var endX=X(new Date(Math.max(t,lastC)));
+    d+=' H'+endX;
+    s+='<path d="'+d+' V'+Y(0)+' Z" fill="var(--accent)" fill-opacity=".12" stroke="none"/>';
+    s+='<path d="'+d+'" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>';
+    pts.forEach(function(q){s+='<circle cx="'+q[0]+'" cy="'+q[1]+'" r="4.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>'});
+    // today
+    var tx=X(t);
+    s+='<line x1="'+tx+'" x2="'+tx+'" y1="'+T+'" y2="'+(H-B)+'" stroke="var(--ink)" stroke-opacity=".35" stroke-dasharray="2 3"/>'
+      +'<text x="'+tx+'" y="'+(T-4)+'" text-anchor="middle" style="fill:var(--ink);font-weight:700">היום</text>';
+    s+='<line id="xh" x1="0" x2="0" y1="'+T+'" y2="'+(H-B)+'" stroke="var(--ink)" stroke-opacity=".5" visibility="hidden"/>';
+    s+='<rect id="hit" x="'+L+'" y="0" width="'+(W-L-Rr)+'" height="'+H+'" fill="transparent"/>';
+    s+='</svg><div class="tip" id="tip" hidden></div>';
+    box.innerHTML=s;
+    var hit=box.querySelector('#hit'), tip=box.querySelector('#tip'), xh=box.querySelector('#xh'), svg=box.querySelector('svg');
+    function move(e){
+      var r=svg.getBoundingClientRect(), px=(e.clientX-r.left)*(W/r.width);
+      px=Math.max(L,Math.min(W-Rr,px));
+      var dt=new Date(x0.getTime()+(px-L)/(W-L-Rr)*span); dt=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate());
+      xh.setAttribute('x1',px);xh.setAttribute('x2',px);xh.setAttribute('visibility','visible');
+      tip.hidden=false;
+      tip.innerHTML='<div>'+fd(dt,{day:'numeric',month:'numeric',year:'2-digit'})+'</div><div>תוכנית: <b>'+ils(expectedAt(dt,p))+'</b></div>'+(dt<=t?'<div>בפועל: <b>'+ils(paidBy(dt,list))+'</b></div>':'');
+      var lp=px*(r.width/W); lp=Math.max(70,Math.min(r.width-70,lp));
+      tip.style.left=lp+'px';
+    }
+    function leave(){tip.hidden=true;xh.setAttribute('visibility','hidden')}
+    hit.addEventListener('pointermove',move);hit.addEventListener('pointerdown',move);hit.addEventListener('pointerleave',leave);
+  }
+  var rz;
+  window.addEventListener('resize',function(){clearTimeout(rz);rz=setTimeout(function(){if(lastChart)drawChart.apply(null,lastChart)},150)});
+
+  // ---------- events ----------
+  function bind(list,start){
+    app.querySelectorAll('[data-goal]').forEach(function(b){
+      b.addEventListener('click',function(){
+        if(!canWrite||saving) return;
+        var m=+b.getAttribute('data-goal'); if(m===months()&&state.goal) return;
+        save({cleanings:state.cleanings,goal:{months:m,start:iso(start)}},'היעד עודכן: '+(m===6?'חצי שנה':'שנה'));
+      });
+    });
+    var gs=document.getElementById('g-start');
+    if(gs) gs.addEventListener('change',function(){
+      if(!gs.value) return;
+      save({cleanings:state.cleanings,goal:{months:months(),start:gs.value}},'תאריך ההתחלה עודכן');
+    });
+    var q=document.getElementById('quick');
+    if(q) q.addEventListener('click',function(){
+      if(saving) return;
+      add({date:iso(today()),hours:4,note:''});
+    });
+    var form=document.getElementById('add');
+    if(form){
+      var hrs=document.getElementById('f-hours'), prev=document.getElementById('f-prev');
+      hrs.addEventListener('input',function(){prev.textContent='סכום: '+ils((parseFloat(hrs.value)||0)*PER_HOUR)});
+      form.addEventListener('submit',function(e){
+        e.preventDefault(); if(saving) return;
+        var hours=parseFloat(hrs.value), date=document.getElementById('f-date').value;
+        if(!date||!(hours>0)){msg='צריך תאריך ומספר שעות.';render();return}
+        add({date:date,hours:hours,note:document.getElementById('f-note').value.trim()});
+      });
+    }
+    app.querySelectorAll('[data-del]').forEach(function(b){
+      b.addEventListener('click',function(){
+        var id=b.getAttribute('data-del');
+        if(pendingDel!==id){pendingDel=id;render();return}
+        pendingDel=null;
+        save({cleanings:state.cleanings.filter(function(c){return c.id!==id}),goal:state.goal||null},'הניקיון נמחק');
+      });
+    });
+  }
+
+  function add(c){
+    c.id=Date.now().toString(36); c.amount=c.hours*PER_HOUR;
+    var goal=state.goal||{months:months(),start:iso(startDate(sorted().concat([c]).sort(function(a,b){return a.date<b.date?-1:1})))};
+    save({cleanings:state.cleanings.concat([c]),goal:goal},'נרשם ניקיון: +'+ils(c.amount));
+  }
+
+  function buildDoc(s){
+    var json=JSON.stringify(s).replace(/</g,'\\u003c');
+    var css=document.getElementById('app-css').textContent;
+    var js=document.getElementById('app-js').textContent;
+    return '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>'+RESET+'</style></head><body>'
+      +'<title>ניקיונות לבניה</title>'+FONTS+'<style id="app-css">'+css+'</style><main id="app" dir="rtl" lang="he"></main>'
+      +'<script type="application/json" id="state">'+json+'<\/script><script id="app-js">'+js+'<\/script></body></html>';
+  }
+
+  function save(next,okMsg){
+    if(!art){msg='אי אפשר לשמור בתצוגה הזו.';render();return}
+    saving=true; msg=''; flash=''; render();
+    try{sessionStorage.setItem('nk-flash',okMsg||'נשמר')}catch(e){}
+    art.publish(buildDoc(next)).catch(function(e){
+      try{sessionStorage.removeItem('nk-flash')}catch(x){}
+      saving=false;
+      var code=e&&e.code;
+      if(code==='conflict') return;
+      if(['not_writer','not_granted','consent_required','capability_disabled','capability_removed','not_declared'].indexOf(code)>=0){canWrite=false;msg='התצוגה הזו לקריאה בלבד ('+code+'). כדי לרשום ניקיונות, פתח את הקישור באתר claude.ai כשאתה מחובר לחשבון שלך.'}
+      else msg='השמירה לא הצליחה ('+(code||'unknown')+'). נסה שוב בעוד רגע.';
+      render();
+    });
+  }
+
+  render();
+  if(flash) setTimeout(function(){flash='';render()},4000);
+  (async function(){
+    try{
+      if(!window.claude||!window.claude.use) return;
+      art=await window.claude.use('artifact');
+      var u=await window.claude.use('user');
+      // show the controls whenever this view can publish; a refused save switches to read-only
+      canWrite=!!art && (u ? ((await u.canEdit()) || (await u.isOwner())) : true);
+      render();
+    }catch(e){}
+  })();
+})();
+</script>
+
+</body></html>
